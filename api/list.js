@@ -1,24 +1,25 @@
 import { google } from 'googleapis';
 
 export default async function handler(req, res) {
-    const auth = new google.auth.GoogleAuth({
-        credentials: {
-            client_email: process.env.G_EMAIL,
-            private_key: process.env.G_KEY.replace(/\\n/g, '\n'),
-        },
-        scopes: ['https://www.googleapis.com/auth/drive.readonly'],
-    });
-
-    const drive = google.drive({ version: 'v3', auth });
-
     try {
+        const oauth2Client = new google.auth.OAuth2(
+            process.env.CLIENT_ID,
+            process.env.CLIENT_SECRET
+        );
+
+        oauth2Client.setCredentials({ refresh_token: process.env.REFRESH_TOKEN });
+
+        const drive = google.drive({ version: 'v3', auth: oauth2Client });
+
         const response = await drive.files.list({
             q: `'${process.env.FOLDER_ID}' in parents and mimeType contains 'image/'`,
             fields: 'files(id, name, thumbnailLink, webContentLink)',
             orderBy: 'createdTime desc'
         });
+        
         res.status(200).json(response.data.files);
     } catch (error) {
+        console.error("ERRORE LISTA:", error.message);
         res.status(500).json({ error: error.message });
     }
 }
