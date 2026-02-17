@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bacheca Foto Evento</title>
+    <style>
+        :root { --brand: #e91e63; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #fafafa; text-align: center; }
+        header { background: var(--brand); color: white; padding: 40px 20px; }
+        .upload-card { background: white; max-width: 400px; margin: -30px auto 30px; padding: 20px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        
+        /* Grid della Bacheca */
+        #bacheca { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); 
+            gap: 10px; padding: 20px; max-width: 1000px; margin: 0 auto; 
+        }
+        .photo-item { 
+            aspect-ratio: 1 / 1; 
+            overflow: hidden; 
+            border-radius: 10px; 
+            background: #eee;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        }
+        .photo-item img { width: 100%; height: 100%; object-fit: cover; transition: 0.3s; }
+        .photo-item img:hover { transform: scale(1.1); }
+
+        button { background: var(--brand); color: white; border: none; padding: 12px 24px; border-radius: 30px; font-weight: bold; cursor: pointer; }
+        input[type="file"] { margin: 15px 0; display: block; width: 100%; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>📸 Il Nostro Album Live</h1>
+    <p>Carica le tue foto e guardale apparire sulla bacheca!</p>
+</header>
+
+<div class="upload-card">
+    <input type="file" id="photoInput" accept="image/*" multiple>
+    <button onclick="upload()">Invia Foto</button>
+    <div id="status" style="margin-top:10px; font-size: 0.9em;"></div>
+</div>
+
+<h2 style="color: #444;">Bacheca Foto</h2>
+<div id="bacheca"></div>
+
+<script>
+    // Carica le foto all'avvio
+    window.onload = loadGallery;
+
+    async function loadGallery() {
+        const bacheca = document.getElementById('bacheca');
+        try {
+            const res = await fetch('/api/list');
+            const files = await res.json();
+            
+            bacheca.innerHTML = files.map(file => `
+                <div class="photo-item">
+                    <img src="${file.thumbnailLink.replace('=s220', '=s600')}" loading="lazy">
+                </div>
+            `).join('');
+        } catch (e) {
+            console.error("Errore nel caricamento bacheca");
+        }
+    }
+
+    async function upload() {
+        const input = document.getElementById('photoInput');
+        const status = document.getElementById('status');
+        if (input.files.length === 0) return alert("Scegli almeno una foto!");
+
+        status.innerText = "Caricamento...";
+        
+        for (let file of input.files) {
+            const formData = new FormData();
+            formData.append('file', file);
+            await fetch('/api/upload', { method: 'POST', body: formData });
+        }
+
+        status.innerText = "✅ Caricate! Aggiorno la bacheca...";
+        input.value = "";
+        setTimeout(loadGallery, 2000); // Ricarica dopo 2 secondi
+    }
+</script>
+</body>
+</html>
