@@ -46,7 +46,9 @@ export default async function handler(req, res) {
         mimeType: file.mimetype,
         body: fs.createReadStream(file.filepath),
       },
-      supportsAllDrives: true, 
+      // Queste due righe dicono a Google di ignorare la quota dell'account di servizio
+      supportsAllDrives: true,
+      keepRevisionForever: true, 
       fields: 'id',
     });
 
