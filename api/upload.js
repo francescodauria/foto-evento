@@ -5,50 +5,47 @@ import fs from 'fs';
 export const config = { api: { bodyParser: false } };
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Metodo non permesso' });
 
   const form = formidable({});
   
-  try {
-    const [fields, files] = await form.parse(req);
-    const file = files.file[0];
+  return new Promise((resolve, reject) => {
+    form.parse(req, async (err, fields, files) => {
+      if (err) return res.status(500).json({ error: "Errore parsing file" });
 
-    // --- LOG DI CONTROLLO ---
-    console.log("ID CARTELLA RICEVUTO:", process.env.FOLDER_ID);
-    console.log("EMAIL SERVICE ACCOUNT:", process.env.G_EMAIL);
+      try {
+        const file = files.file[0] || files.file;
 
-    const auth = new google.auth.GoogleAuth({
-      credentials: {
-        client_email: process.env.G_EMAIL,
-        private_key: process.env.G_KEY.replace(/\\n/g, '\n'),
-      },
-      scopes: ['https://www.googleapis.com/auth/drive.file', 'https://www.googleapis.com/auth/drive'],
+        // Autenticazione con le TUE credenziali reali
+        const oauth2Client = new google.auth.OAuth2(
+          process.env.CLIENT_ID,
+          process.env.CLIENT_SECRET,
+          "https://developers.google.com/oauthplayground"
+        );
+
+        oauth2Client.setCredentials({ refresh_token: process.env.REFRESH_TOKEN });
+
+        const drive = google.drive({ version: 'v3', auth: oauth2Client });
+
+        const response = await drive.files.create({
+          requestBody: {
+            name: `Foto_${Date.now()}_${file.originalFilename || 'foto.jpg'}`,
+            parents: [process.env.FOLDER_ID],
+          },
+          media: {
+            mimeType: file.mimetype,
+            body: fs.createReadStream(file.filepath),
+          },
+          fields: 'id',
+        });
+
+        res.status(200).json({ success: true, id: response.data.id });
+        resolve();
+      } catch (error) {
+        console.error("ERRORE OAUTH:", error.message);
+        res.status(500).json({ error: error.message });
+        resolve();
+      }
     });
-
-    const drive = google.drive({ version: 'v3', auth });
-
-    const response = await drive.files.create({
-      requestBody: {
-        name: `Foto_${Date.now()}_${file.originalFilename}`,
-        parents: [process.env.FOLDER_ID.trim()], // Usiamo trim() per eliminare spazi invisibili
-      },
-      media: {
-        mimeType: file.mimetype,
-        body: fs.createReadStream(file.filepath),
-      },
-      // Queste opzioni sono vitali per i Service Account
-      supportsAllDrives: true,
-      ignoreDefaultVisibility: true,
-      fields: 'id',
-    });
-
-    return res.status(200).json({ success: true, id: response.data.id });
-  } catch (error) {
-    console.error("ERRORE CRITICO:", error.message);
-    // Mandiamo l'errore esatto al browser per vederlo subito
-    return res.status(500).json({ 
-        error: error.message, 
-        instruction: "Verifica che l'ID cartella nei log di Vercel non sia undefined o vuoto" 
-    });
-  }
+  });
 }
