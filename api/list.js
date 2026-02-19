@@ -12,7 +12,7 @@ export default async function handler(req, res) {
         const drive = google.drive({ version: 'v3', auth: oauth2Client });
 
         const response = await drive.files.list({
-            q: `'${process.env.FOLDER_ID}' in parents and mimeType contains 'image/'`,
+            q: `'${process.env.FOLDER_ID}' in parents and mimeType contains 'image/' and trashed = false`,
             fields: 'files(id, name, thumbnailLink, webContentLink)',
             orderBy: 'createdTime desc'
         });
