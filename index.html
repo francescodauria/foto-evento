@@ -84,6 +84,38 @@
         .btn-invia:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; transform: none; }
 
         #file-count { font-size: 0.9rem; color: #888; margin-bottom: 20px; display: block; }
+
+        /* --- STILI BARRA DI PROGRESSO --- */
+        #progress-container {
+            display: none; /* Nascosto di default */
+            margin-top: 20px;
+            text-align: left;
+            width: 80%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        #progress-text {
+            font-size: 0.9rem;
+            color: var(--gold-dark);
+            font-weight: 600;
+            margin-bottom: 5px;
+            display: block;
+        }
+        .progress-bar-bg {
+            width: 100%;
+            background-color: #eee;
+            border-radius: 10px;
+            height: 12px;
+            overflow: hidden;
+        }
+        #progress-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--gold-light), var(--gold));
+            border-radius: 10px;
+            transition: width 0.2s ease;
+        }
+        /* -------------------------------- */
         
         #bacheca { 
             display: grid; 
@@ -145,6 +177,14 @@
     <span id="file-count">Nessuna foto selezionata</span>
 
     <button id="uploadBtn" class="btn-invia" onclick="upload()">Invia all'Album</button>
+    
+    <div id="progress-container">
+        <span id="progress-text">Caricamento in corso...</span>
+        <div class="progress-bar-bg">
+            <div id="progress-bar-fill"></div>
+        </div>
+    </div>
+
     <div id="status" style="margin-top:15px; font-weight: 600; color: var(--gold-dark);"></div>
 </div>
 
@@ -162,7 +202,6 @@
     let photoData = []; 
     let currentSlide = 0;
     
-    // Variabili per il tracciamento dei nuovi caricamenti
     let lastFirstPhotoId = ""; 
     let lastPhotoCount = -1;
 
@@ -173,22 +212,17 @@
 
     window.onload = () => {
         loadGallery();
-        // ATTIVA L'AGGIORNAMENTO AUTOMATICO OGNI 15 SECONDI (15000 millisecondi)
         setInterval(loadGallery, 15000); 
     };
 
     async function loadGallery() {
-        // Se qualcuno sta guardando lo slideshow, mettiamo in pausa l'aggiornamento per non disturbarlo
-        if (document.getElementById('slideshowModal').style.display === 'flex') {
-            return; 
-        }
+        if (document.getElementById('slideshowModal').style.display === 'flex') return; 
 
         const bacheca = document.getElementById('bacheca');
         try {
             const res = await fetch('/api/list');
             const newData = await res.json();
             
-            // Aggiorna SOLO se c'è una foto nuova o se il numero di foto è cambiato (Anti-sfarfallio)
             if (newData.length !== lastPhotoCount || (newData.length > 0 && newData[0].id !== lastFirstPhotoId)) {
                 photoData = newData;
                 lastPhotoCount = newData.length;
@@ -209,18 +243,66 @@
         const input = document.getElementById('photoInput');
         const status = document.getElementById('status');
         const btn = document.getElementById('uploadBtn');
+        const progressContainer = document.getElementById('progress-container');
+        const progressText = document.getElementById('progress-text');
+        const progressBarFill = document.getElementById('progress-bar-fill');
 
-        if (input.files.length === 0) return alert("Scegli prima le foto da caricare!");
+        const totalFiles = input.files.length;
+        if (totalFiles === 0) return alert("Scegli prima le foto da caricare!");
 
         btn.disabled = true;
-        status.innerText = "⏳ Caricamento in corso... attendi.";
+        status.innerText = "";
+        progressContainer.style.display = "block"; // Mostra la barra
         
-        for (let file of input.files) {
-            const formData = new FormData();
-            formData.append('file', file);
-            await fetch('/api/upload', { method: 'POST', body: formData });
+        for (let i = 0; i < totalFiles; i++) {
+            const file = input.files[i];
+            
+            // Aggiorna il testo: se è più di 1 foto mostra "1/5", altrimenti solo "Caricamento..."
+            if (totalFiles > 1) {
+                progressText.innerText = `Caricamento foto ${i + 1} di ${totalFiles}...`;
+            } else {
+                progressText.innerText = `Caricamento in corso...`;
+            }
+            
+            progressBarFill.style.width = '0%'; // Resetta la barra per ogni foto
+
+            // Creiamo una Promise per aspettare che ogni singola foto finisca
+            await new Promise((resolve, reject) => {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', '/api/upload', true);
+
+                // Evento che traccia il progresso
+                xhr.upload.onprogress = function(e) {
+                    if (e.lengthComputable) {
+                        const percentComplete = (e.loaded / e.total) * 100;
+                        progressBarFill.style.width = percentComplete + '%';
+                    }
+                };
+
+                // Quando ha finito
+                xhr.onload = function() {
+                    if (xhr.status === 200) {
+                        resolve();
+                    } else {
+                        console.error("Errore caricamento");
+                        resolve(); // Risolviamo comunque per non bloccare le altre foto
+                    }
+                };
+
+                xhr.onerror = function() {
+                    console.error("Errore di rete");
+                    resolve();
+                };
+
+                xhr.send(formData);
+            });
         }
 
+        // Finito il ciclo di tutte le foto
+        progressContainer.style.display = "none";
         status.innerText = "✨ Foto caricate con successo!";
         input.value = "";
         document.getElementById('file-count').innerText = "Nessuna foto selezionata";
@@ -228,7 +310,7 @@
         
         setTimeout(() => {
             status.innerText = "";
-            loadGallery(); // Forza un aggiornamento immediato dopo l'upload
+            loadGallery(); // Forza aggiornamento
         }, 1500);
     }
 
@@ -240,7 +322,6 @@
 
     function closeModal() {
         document.getElementById('slideshowModal').style.display = 'none';
-        // Appena chiude lo slideshow, controlla subito se ci sono foto nuove
         loadGallery(); 
     }
 
