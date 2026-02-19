@@ -3,50 +3,174 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bacheca Foto Evento</title>
+    <title>30° Compleanno Angela e Francesco</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,600&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        :root { --brand: #e91e63; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #fafafa; text-align: center; }
-        header { background: var(--brand); color: white; padding: 40px 20px; }
-        .upload-card { background: white; max-width: 400px; margin: -30px auto 30px; padding: 20px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        :root { 
+            --gold: #D4AF37; /* Oro classico */
+            --gold-light: #f9f1d8;
+            --gold-dark: #aa8929;
+            --white: #ffffff;
+            --text-dark: #333333;
+        }
+
+        body { 
+            font-family: 'Montserrat', sans-serif; 
+            margin: 0; 
+            background: #fafafa; 
+            color: var(--text-dark); 
+            text-align: center; 
+        }
+
+        header { 
+            background: var(--white); 
+            padding: 50px 20px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border-bottom: 3px solid var(--gold);
+        }
+
+        h1 { 
+            font-family: 'Playfair Display', serif; 
+            color: var(--gold-dark); 
+            font-size: 2.5rem;
+            margin: 0 0 10px 0;
+        }
+
+        p { color: #666; font-size: 1.1rem; }
+
+        .upload-card { 
+            background: var(--white); 
+            max-width: 450px; 
+            margin: 40px auto; 
+            padding: 30px; 
+            border-radius: 15px; 
+            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.15); 
+            border: 1px solid var(--gold-light);
+        }
+
+        /* Stile personalizzato per l'input file */
+        input[type="file"] { display: none; }
+
+        .custom-file-upload {
+            display: inline-block;
+            padding: 12px 24px;
+            cursor: pointer;
+            border: 2px dashed var(--gold);
+            color: var(--gold-dark);
+            border-radius: 8px;
+            font-weight: 600;
+            transition: 0.3s;
+            margin-bottom: 15px;
+            width: 80%;
+            box-sizing: border-box;
+        }
+
+        .custom-file-upload:hover { background: var(--gold-light); }
+
+        .btn-invia { 
+            background: linear-gradient(135deg, var(--gold), var(--gold-dark)); 
+            color: var(--white); 
+            border: none; 
+            padding: 14px 30px; 
+            border-radius: 30px; 
+            font-weight: bold; 
+            font-size: 1.1rem;
+            cursor: pointer; 
+            transition: 0.3s; 
+            width: 80%;
+            box-shadow: 0 4px 10px rgba(212, 175, 55, 0.4);
+        }
+
+        .btn-invia:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(212, 175, 55, 0.6); }
+        .btn-invia:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; transform: none; }
+
+        #file-count { font-size: 0.9rem; color: #888; margin-bottom: 20px; display: block; }
         
         /* Grid della Bacheca */
         #bacheca { 
             display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); 
-            gap: 10px; padding: 20px; max-width: 1000px; margin: 0 auto; 
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); 
+            gap: 15px; 
+            padding: 20px; 
+            max-width: 1000px; 
+            margin: 0 auto 50px auto; 
         }
+        
         .photo-item { 
             aspect-ratio: 1 / 1; 
             overflow: hidden; 
             border-radius: 10px; 
             background: #eee;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+            cursor: pointer; /* Indica che è cliccabile */
+            border: 2px solid transparent;
+            transition: 0.3s;
         }
-        .photo-item img { width: 100%; height: 100%; object-fit: cover; transition: 0.3s; }
-        .photo-item img:hover { transform: scale(1.1); }
+        
+        .photo-item:hover { border-color: var(--gold); transform: scale(1.03); }
+        .photo-item img { width: 100%; height: 100%; object-fit: cover; }
 
-        button { background: var(--brand); color: white; border: none; padding: 12px 24px; border-radius: 30px; font-weight: bold; cursor: pointer; }
-        input[type="file"] { margin: 15px 0; display: block; width: 100%; }
+        /* Stile Modal (Slideshow) */
+        .modal {
+            display: none; position: fixed; z-index: 1000; left: 0; top: 0;
+            width: 100%; height: 100%; background-color: rgba(0,0,0,0.9);
+            align-items: center; justify-content: center; flex-direction: column;
+        }
+        .modal-content { max-width: 90%; max-height: 80vh; border-radius: 8px; box-shadow: 0 0 20px rgba(212, 175, 55, 0.5); border: 2px solid var(--gold); }
+        
+        .close { position: absolute; top: 20px; right: 30px; color: var(--gold); font-size: 40px; font-weight: bold; cursor: pointer; }
+        .close:hover { color: var(--white); }
+        
+        .nav-btn {
+            cursor: pointer; position: absolute; top: 50%; transform: translateY(-50%);
+            width: auto; padding: 16px; color: var(--gold); font-weight: bold; font-size: 30px;
+            transition: 0.3s; user-select: none; border: none; background: rgba(0,0,0,0.5); border-radius: 50%;
+        }
+        .nav-btn:hover { background: rgba(212, 175, 55, 0.8); color: white; }
+        .prev { left: 20px; }
+        .next { right: 20px; }
+
     </style>
 </head>
 <body>
 
 <header>
-    <h1>📸 Il Nostro Album Live</h1>
-    <p>Carica le tue foto e guardale apparire sulla bacheca!</p>
+    <h1>Il 30° compleanno<br>di Angela e Francesco</h1>
+    <p>Aiutateci a creare un album indimenticabile!</p>
 </header>
 
 <div class="upload-card">
+    <label for="photoInput" class="custom-file-upload">
+        📷 Scegli le foto...
+    </label>
     <input type="file" id="photoInput" accept="image/*" multiple>
-    <button onclick="upload()">Invia Foto</button>
-    <div id="status" style="margin-top:10px; font-size: 0.9em;"></div>
+    
+    <span id="file-count">Nessuna foto selezionata</span>
+
+    <button id="uploadBtn" class="btn-invia" onclick="upload()">Invia all'Album</button>
+    <div id="status" style="margin-top:15px; font-weight: 600; color: var(--gold-dark);"></div>
 </div>
 
-<h2 style="color: #444;">Bacheca Foto</h2>
+<h2 style="font-family: 'Playfair Display', serif; color: var(--text-dark); margin-top: 40px;">I Nostri Ricordi</h2>
 <div id="bacheca"></div>
 
+<div id="slideshowModal" class="modal">
+    <span class="close" onclick="closeModal()">&times;</span>
+    <button class="nav-btn prev" onclick="changeSlide(-1)">&#10094;</button>
+    <img class="modal-content" id="modalImg">
+    <button class="nav-btn next" onclick="changeSlide(1)">&#10095;</button>
+</div>
+
 <script>
+    let photoData = []; // Salva i dati delle foto per lo slideshow
+    let currentSlide = 0;
+
+    // Aggiorna il testo quando si scelgono le foto
+    document.getElementById('photoInput').addEventListener('change', function() {
+        const count = this.files.length;
+        document.getElementById('file-count').innerText = count === 1 ? "1 foto pronta per l'invio" : (count > 1 ? `${count} foto pronte per l'invio` : "Nessuna foto selezionata");
+    });
+
     // Carica le foto all'avvio
     window.onload = loadGallery;
 
@@ -54,11 +178,11 @@
         const bacheca = document.getElementById('bacheca');
         try {
             const res = await fetch('/api/list');
-            const files = await res.json();
+            photoData = await res.json();
             
-            bacheca.innerHTML = files.map(file => `
-                <div class="photo-item">
-                    <img src="${file.thumbnailLink.replace('=s220', '=s600')}" loading="lazy">
+            bacheca.innerHTML = photoData.map((file, index) => `
+                <div class="photo-item" onclick="openModal(${index})">
+                    <img src="${file.thumbnailLink.replace('=s220', '=s600')}" loading="lazy" alt="Foto">
                 </div>
             `).join('');
         } catch (e) {
@@ -69,9 +193,12 @@
     async function upload() {
         const input = document.getElementById('photoInput');
         const status = document.getElementById('status');
-        if (input.files.length === 0) return alert("Scegli almeno una foto!");
+        const btn = document.getElementById('uploadBtn');
 
-        status.innerText = "Caricamento...";
+        if (input.files.length === 0) return alert("Scegli prima le foto da caricare!");
+
+        btn.disabled = true;
+        status.innerText = "⏳ Caricamento in corso... attendi.";
         
         for (let file of input.files) {
             const formData = new FormData();
@@ -79,10 +206,47 @@
             await fetch('/api/upload', { method: 'POST', body: formData });
         }
 
-        status.innerText = "✅ Caricate! Aggiorno la bacheca...";
+        status.innerText = "✨ Foto caricate con successo!";
         input.value = "";
-        setTimeout(loadGallery, 2000); // Ricarica dopo 2 secondi
+        document.getElementById('file-count').innerText = "Nessuna foto selezionata";
+        btn.disabled = false;
+        
+        setTimeout(() => {
+            status.innerText = "";
+            loadGallery();
+        }, 2000);
     }
+
+    // --- FUNZIONI SLIDESHOW ---
+    function openModal(index) {
+        currentSlide = index;
+        document.getElementById('slideshowModal').style.display = 'flex';
+        updateModalImage();
+    }
+
+    function closeModal() {
+        document.getElementById('slideshowModal').style.display = 'none';
+    }
+
+    function changeSlide(direction) {
+        currentSlide += direction;
+        if (currentSlide >= photoData.length) currentSlide = 0; // Torna all'inizio
+        if (currentSlide < 0) currentSlide = photoData.length - 1; // Va all'ultima
+        updateModalImage();
+    }
+
+    function updateModalImage() {
+        const img = document.getElementById('modalImg');
+        // Richiediamo un'immagine molto grande per lo slideshow (=s1600)
+        img.src = photoData[currentSlide].thumbnailLink.replace('=s220', '=s1600');
+    }
+
+    // Chiude lo slideshow se l'utente preme Esc sulla tastiera
+    document.addEventListener('keydown', function(event) {
+        if (event.key === "Escape") closeModal();
+        if (event.key === "ArrowRight") changeSlide(1);
+        if (event.key === "ArrowLeft") changeSlide(-1);
+    });
 </script>
 </body>
 </html>
