@@ -7,7 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,600&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
     <style>
         :root { 
-            --gold: #D4AF37; /* Oro classico */
+            --gold: #D4AF37; 
             --gold-light: #f9f1d8;
             --gold-dark: #aa8929;
             --white: #ffffff;
@@ -48,7 +48,6 @@
             border: 1px solid var(--gold-light);
         }
 
-        /* Stile personalizzato per l'input file */
         input[type="file"] { display: none; }
 
         .custom-file-upload {
@@ -86,7 +85,6 @@
 
         #file-count { font-size: 0.9rem; color: #888; margin-bottom: 20px; display: block; }
         
-        /* Grid della Bacheca */
         #bacheca { 
             display: grid; 
             grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); 
@@ -102,7 +100,7 @@
             border-radius: 10px; 
             background: #eee;
             box-shadow: 0 4px 8px rgba(0,0,0,0.08);
-            cursor: pointer; /* Indica che è cliccabile */
+            cursor: pointer; 
             border: 2px solid transparent;
             transition: 0.3s;
         }
@@ -110,7 +108,6 @@
         .photo-item:hover { border-color: var(--gold); transform: scale(1.03); }
         .photo-item img { width: 100%; height: 100%; object-fit: cover; }
 
-        /* Stile Modal (Slideshow) */
         .modal {
             display: none; position: fixed; z-index: 1000; left: 0; top: 0;
             width: 100%; height: 100%; background-color: rgba(0,0,0,0.9);
@@ -162,31 +159,49 @@
 </div>
 
 <script>
-    let photoData = []; // Salva i dati delle foto per lo slideshow
+    let photoData = []; 
     let currentSlide = 0;
+    
+    // Variabili per il tracciamento dei nuovi caricamenti
+    let lastFirstPhotoId = ""; 
+    let lastPhotoCount = -1;
 
-    // Aggiorna il testo quando si scelgono le foto
     document.getElementById('photoInput').addEventListener('change', function() {
         const count = this.files.length;
         document.getElementById('file-count').innerText = count === 1 ? "1 foto pronta per l'invio" : (count > 1 ? `${count} foto pronte per l'invio` : "Nessuna foto selezionata");
     });
 
-    // Carica le foto all'avvio
-    window.onload = loadGallery;
+    window.onload = () => {
+        loadGallery();
+        // ATTIVA L'AGGIORNAMENTO AUTOMATICO OGNI 15 SECONDI (15000 millisecondi)
+        setInterval(loadGallery, 15000); 
+    };
 
     async function loadGallery() {
+        // Se qualcuno sta guardando lo slideshow, mettiamo in pausa l'aggiornamento per non disturbarlo
+        if (document.getElementById('slideshowModal').style.display === 'flex') {
+            return; 
+        }
+
         const bacheca = document.getElementById('bacheca');
         try {
             const res = await fetch('/api/list');
-            photoData = await res.json();
+            const newData = await res.json();
             
-            bacheca.innerHTML = photoData.map((file, index) => `
-                <div class="photo-item" onclick="openModal(${index})">
-                    <img src="${file.thumbnailLink.replace('=s220', '=s600')}" loading="lazy" alt="Foto">
-                </div>
-            `).join('');
+            // Aggiorna SOLO se c'è una foto nuova o se il numero di foto è cambiato (Anti-sfarfallio)
+            if (newData.length !== lastPhotoCount || (newData.length > 0 && newData[0].id !== lastFirstPhotoId)) {
+                photoData = newData;
+                lastPhotoCount = newData.length;
+                if (newData.length > 0) lastFirstPhotoId = newData[0].id;
+
+                bacheca.innerHTML = photoData.map((file, index) => `
+                    <div class="photo-item" onclick="openModal(${index})">
+                        <img src="${file.thumbnailLink.replace('=s220', '=s600')}" loading="lazy" alt="Foto">
+                    </div>
+                `).join('');
+            }
         } catch (e) {
-            console.error("Errore nel caricamento bacheca");
+            console.error("Errore nell'aggiornamento automatico della bacheca", e);
         }
     }
 
@@ -213,11 +228,10 @@
         
         setTimeout(() => {
             status.innerText = "";
-            loadGallery();
-        }, 2000);
+            loadGallery(); // Forza un aggiornamento immediato dopo l'upload
+        }, 1500);
     }
 
-    // --- FUNZIONI SLIDESHOW ---
     function openModal(index) {
         currentSlide = index;
         document.getElementById('slideshowModal').style.display = 'flex';
@@ -226,22 +240,22 @@
 
     function closeModal() {
         document.getElementById('slideshowModal').style.display = 'none';
+        // Appena chiude lo slideshow, controlla subito se ci sono foto nuove
+        loadGallery(); 
     }
 
     function changeSlide(direction) {
         currentSlide += direction;
-        if (currentSlide >= photoData.length) currentSlide = 0; // Torna all'inizio
-        if (currentSlide < 0) currentSlide = photoData.length - 1; // Va all'ultima
+        if (currentSlide >= photoData.length) currentSlide = 0; 
+        if (currentSlide < 0) currentSlide = photoData.length - 1; 
         updateModalImage();
     }
 
     function updateModalImage() {
         const img = document.getElementById('modalImg');
-        // Richiediamo un'immagine molto grande per lo slideshow (=s1600)
         img.src = photoData[currentSlide].thumbnailLink.replace('=s220', '=s1600');
     }
 
-    // Chiude lo slideshow se l'utente preme Esc sulla tastiera
     document.addEventListener('keydown', function(event) {
         if (event.key === "Escape") closeModal();
         if (event.key === "ArrowRight") changeSlide(1);
