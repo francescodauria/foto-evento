@@ -16,50 +16,54 @@
         }
 
         body { font-family: 'Montserrat', sans-serif; margin: 0; background: #fafafa; color: var(--text-dark); text-align: center; }
-        header { background: var(--white); padding: 50px 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-bottom: 3px solid var(--gold); position: relative; }
+        header { background: var(--white); padding: 40px 20px 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); position: relative; }
         
         .fullscreen-btn { position: absolute; top: 20px; right: 20px; background: transparent; border: none; color: var(--gold-dark); cursor: pointer; transition: 0.3s; padding: 5px; }
         .fullscreen-btn:hover { transform: scale(1.1); color: var(--gold); }
         .fullscreen-btn svg { width: 28px; height: 28px; }
 
-        h1 { font-family: 'Playfair Display', serif; color: var(--gold-dark); font-size: 2.5rem; margin: 0 0 10px 0; }
-        p { color: #666; font-size: 1.1rem; margin: 0; }
+        h1 { font-family: 'Playfair Display', serif; color: var(--gold-dark); font-size: 2.2rem; margin: 0 0 10px 0; }
+        p { color: #666; font-size: 1rem; margin: 0; }
 
-        .upload-card { background: var(--white); max-width: 450px; margin: 40px auto; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(212, 175, 55, 0.15); border: 1px solid var(--gold-light); }
-        
-        /* CAMPI TESTO GUESTBOOK */
+        /* MENU A SCHEDE (TABS) */
+        .nav-tabs { display: flex; justify-content: center; gap: 10px; margin-top: 20px; border-bottom: 2px solid var(--gold-light); padding-bottom: 15px; }
+        .tab-btn { background: transparent; border: 2px solid var(--gold); color: var(--gold-dark); padding: 10px 20px; border-radius: 30px; font-weight: bold; cursor: pointer; transition: 0.3s; font-family: 'Montserrat', sans-serif; font-size: 0.95rem; }
+        .tab-btn:hover { background: var(--gold-light); }
+        .tab-btn.active { background: var(--gold); color: var(--white); box-shadow: 0 4px 10px rgba(212, 175, 55, 0.4); }
+
+        /* CONTENUTI SCHEDE */
+        .tab-content { display: none; animation: fadeIn 0.4s ease-in-out; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* SEZIONE UPLOAD */
+        .upload-card { background: var(--white); max-width: 450px; margin: 30px auto; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(212, 175, 55, 0.15); border: 1px solid var(--gold-light); }
         .text-input { width: 85%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; font-family: 'Montserrat', sans-serif; font-size: 1rem; box-sizing: border-box; transition: 0.3s; }
         .text-input:focus { border-color: var(--gold); outline: none; box-shadow: 0 0 8px rgba(212, 175, 55, 0.3); }
-
         input[type="file"] { display: none; }
         .input-group { display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; align-items: center; }
-
         .custom-file-upload { display: inline-block; padding: 14px 24px; cursor: pointer; border: 2px dashed var(--gold); color: var(--gold-dark); border-radius: 8px; font-weight: 600; transition: 0.3s; width: 85%; box-sizing: border-box; background: #fff; }
         .custom-file-upload:hover { background: var(--gold-light); transform: translateY(-2px); }
         .camera-btn { border: 2px solid var(--gold); background: var(--gold-light); }
-
         .btn-invia { background: linear-gradient(135deg, var(--gold), var(--gold-dark)); color: var(--white); border: none; padding: 16px 30px; border-radius: 30px; font-weight: bold; font-size: 1.1rem; cursor: pointer; transition: 0.3s; width: 85%; box-shadow: 0 4px 10px rgba(212, 175, 55, 0.4); }
         .btn-invia:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(212, 175, 55, 0.6); }
         .btn-invia:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; transform: none; }
-
         #file-count { font-size: 0.95rem; color: #555; margin-bottom: 20px; display: block; font-weight: 600; }
-
         #progress-container { display: none; margin-top: 20px; text-align: left; width: 85%; margin-left: auto; margin-right: auto; }
         #progress-text { font-size: 0.9rem; color: var(--gold-dark); font-weight: 600; margin-bottom: 5px; display: block; }
         .progress-bar-bg { width: 100%; background-color: #eee; border-radius: 10px; height: 12px; overflow: hidden; }
         #progress-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--gold-light), var(--gold)); border-radius: 10px; transition: width 0.2s ease; }
-        
+
+        /* SEZIONE BACHECA */
         #bacheca { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; padding: 20px; max-width: 1000px; margin: 0 auto 50px auto; }
         .photo-item { aspect-ratio: 1 / 1; overflow: hidden; border-radius: 10px; background: #eee; box-shadow: 0 4px 8px rgba(0,0,0,0.08); cursor: pointer; border: 2px solid transparent; transition: 0.3s; }
         .photo-item:hover { border-color: var(--gold); transform: scale(1.03); }
         .photo-item img { width: 100%; height: 100%; object-fit: cover; }
 
+        /* MODAL (SLIDESHOW) */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.92); align-items: center; justify-content: center; flex-direction: column; }
         .modal-content { max-width: 90%; max-height: 65vh; border-radius: 8px; box-shadow: 0 0 25px rgba(212, 175, 55, 0.4); border: 2px solid var(--gold); margin-bottom: 15px; }
-        
-        /* STILE DIDASCALIA NELLO SLIDESHOW */
         .modal-caption { color: var(--white); font-family: 'Playfair Display', serif; font-size: 1.2rem; max-width: 80%; text-align: center; margin-bottom: 20px; min-height: 30px; }
-
         .close { position: absolute; top: 20px; right: 30px; color: var(--gold); font-size: 45px; font-weight: bold; cursor: pointer; transition: 0.3s;}
         .close:hover { color: var(--white); transform: scale(1.1); }
         .nav-btn { cursor: pointer; position: absolute; top: 45%; transform: translateY(-50%); width: auto; padding: 15px 20px; color: var(--gold); font-weight: bold; font-size: 30px; transition: 0.3s; user-select: none; border: none; background: rgba(0,0,0,0.4); border-radius: 50%; }
@@ -81,33 +85,42 @@
     </button>
     <h1>Il 30° compleanno<br>di Angela e Francesco</h1>
     <p>Aiutateci a creare un album indimenticabile!</p>
+    
+    <div class="nav-tabs">
+        <button class="tab-btn active" onclick="switchTab('upload')">📸 Carica Foto</button>
+        <button class="tab-btn" onclick="switchTab('gallery')">🖼️ Bacheca Live</button>
+    </div>
 </header>
 
-<div class="upload-card">
-    <input type="text" id="authorInput" class="text-input" placeholder="Il tuo nome (es. Zio Marco)">
-    <textarea id="messageInput" class="text-input" placeholder="Lascia un augurio! (opzionale)" rows="2"></textarea>
+<div id="upload-section" class="tab-content active">
+    <div class="upload-card">
+        <input type="text" id="authorInput" class="text-input" placeholder="Il tuo nome (es. Zio Marco)">
+        <textarea id="messageInput" class="text-input" placeholder="Lascia un augurio! (opzionale)" rows="2"></textarea>
 
-    <div class="input-group">
-        <label for="cameraInput" class="custom-file-upload camera-btn">📸 Scatta ora</label>
-        <input type="file" id="cameraInput" accept="image/*" capture="environment">
+        <div class="input-group">
+            <label for="cameraInput" class="custom-file-upload camera-btn">📸 Scatta ora</label>
+            <input type="file" id="cameraInput" accept="image/*" capture="environment">
 
-        <label for="photoInput" class="custom-file-upload">🖼 Scegli dalla galleria</label>
-        <input type="file" id="photoInput" accept="image/*" multiple>
+            <label for="photoInput" class="custom-file-upload">🖼 Scegli dalla galleria</label>
+            <input type="file" id="photoInput" accept="image/*" multiple>
+        </div>
+        
+        <span id="file-count">Nessuna foto selezionata</span>
+
+        <button id="uploadBtn" class="btn-invia" onclick="upload()">Invia all'Album</button>
+        
+        <div id="progress-container">
+            <span id="progress-text">Caricamento in corso...</span>
+            <div class="progress-bar-bg"><div id="progress-bar-fill"></div></div>
+        </div>
+        <div id="status" style="margin-top:15px; font-weight: 600; color: var(--gold-dark);"></div>
     </div>
-    
-    <span id="file-count">Nessuna foto selezionata</span>
-
-    <button id="uploadBtn" class="btn-invia" onclick="upload()">Invia all'Album</button>
-    
-    <div id="progress-container">
-        <span id="progress-text">Caricamento in corso...</span>
-        <div class="progress-bar-bg"><div id="progress-bar-fill"></div></div>
-    </div>
-    <div id="status" style="margin-top:15px; font-weight: 600; color: var(--gold-dark);"></div>
 </div>
 
-<h2 style="font-family: 'Playfair Display', serif; color: var(--text-dark); margin-top: 40px;">I Nostri Ricordi</h2>
-<div id="bacheca"></div>
+<div id="gallery-section" class="tab-content">
+    <h2 style="font-family: 'Playfair Display', serif; color: var(--text-dark); margin-top: 20px;">I Nostri Ricordi</h2>
+    <div id="bacheca"></div>
+</div>
 
 <div id="slideshowModal" class="modal">
     <span class="close" onclick="closeModal()">&times;</span>
@@ -127,7 +140,7 @@
     let lastFirstPhotoId = ""; 
     let lastPhotoCount = -1;
 
-    // Recupera il nome dalla memoria del browser
+    // INIZIALIZZAZIONE
     window.onload = () => {
         const savedName = localStorage.getItem("guestName");
         if (savedName) document.getElementById("authorInput").value = savedName;
@@ -136,6 +149,23 @@
         setInterval(loadGallery, 15000); 
     };
 
+    // LOGICA CAMBIO SCHEDE (TABS)
+    function switchTab(tabId) {
+        // Nascondi tutti i contenuti e deseleziona i bottoni
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        
+        // Mostra la scheda selezionata e attiva il bottone
+        document.getElementById(tabId + '-section').classList.add('active');
+        document.querySelector(`.tab-btn[onclick="switchTab('${tabId}')"]`).classList.add('active');
+
+        // Se l'utente apre la bacheca, forziamo un aggiornamento rapido
+        if (tabId === 'gallery') {
+            loadGallery();
+        }
+    }
+
+    // LOGICA SELEZIONE FOTO
     document.getElementById('cameraInput').addEventListener('change', function() {
         selectedFiles = Array.from(this.files);
         document.getElementById('photoInput').value = ''; 
@@ -158,6 +188,7 @@
         else if (document.exitFullscreen) document.exitFullscreen();
     }
 
+    // CARICAMENTO BACHECA
     async function loadGallery() {
         if (document.getElementById('slideshowModal').style.display === 'flex') return; 
 
@@ -181,16 +212,11 @@
         }
     }
 
-    // SPARA CORIANDOLI
     function sparaCoriandoli() {
-        confetti({
-            particleCount: 150,
-            spread: 80,
-            origin: { y: 0.6 },
-            colors: ['#D4AF37', '#ffffff', '#f9f1d8', '#aa8929']
-        });
+        confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 }, colors: ['#D4AF37', '#ffffff', '#f9f1d8', '#aa8929'] });
     }
 
+    // LOGICA UPLOAD
     async function upload() {
         const btn = document.getElementById('uploadBtn');
         const author = document.getElementById('authorInput').value;
@@ -199,7 +225,6 @@
 
         if (totalFiles === 0) return alert("Scegli prima le foto da caricare!");
 
-        // Salva il nome in memoria per le prossime volte!
         if (author) localStorage.setItem("guestName", author);
 
         btn.disabled = true;
@@ -228,18 +253,20 @@
 
         document.getElementById('progress-container').style.display = "none";
         
-        // CASCATA DI CORIANDOLI AL SUCCESSO!
         sparaCoriandoli();
         
-        // Pulisce l'interfaccia (il nome resta, il messaggio si azzera)
         document.getElementById('messageInput').value = '';
         selectedFiles = [];
         updateFileCount();
         btn.disabled = false;
         
-        setTimeout(() => loadGallery(), 1500);
+        // Passa automaticamente alla scheda Bacheca per far vedere le foto appena caricate!
+        setTimeout(() => {
+            switchTab('gallery');
+        }, 1500);
     }
 
+    // LOGICA SLIDESHOW
     function openModal(index) {
         currentSlide = index;
         document.getElementById('slideshowModal').style.display = 'flex';
@@ -263,7 +290,6 @@
         document.getElementById('modalImg').src = photo.thumbnailLink.replace('=s220', '=s1600');
         document.getElementById('downloadBtn').href = photo.webContentLink;
         
-        // Mostra la didascalia (Sostituisce gli a capo \n con <br> per l'HTML)
         const captionDiv = document.getElementById('modalCaption');
         if (photo.description) {
             captionDiv.innerHTML = photo.description.replace(/\n/g, '<br>');
