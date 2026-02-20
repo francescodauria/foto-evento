@@ -2,7 +2,6 @@ import { google } from 'googleapis';
 import formidable from 'formidable';
 import fs from 'fs';
 
-
 export const config = { api: { bodyParser: false } };
 
 export default async function handler(req, res) {
@@ -16,22 +15,32 @@ export default async function handler(req, res) {
 
       try {
         const file = files.file[0] || files.file;
+        
+        // Estraiamo nome e messaggio (formidable a volte li mette in array)
+        const author = fields.author ? (Array.isArray(fields.author) ? fields.author[0] : fields.author) : '';
+        const message = fields.message ? (Array.isArray(fields.message) ? fields.message[0] : fields.message) : '';
 
-        // Autenticazione con le TUE credenziali reali
+        // Creiamo la didascalia da salvare su Drive
+        let didascalia = "";
+        if (author) didascalia += `📸 Scattata da: ${author}\n`;
+        if (message) didascalia += `💬 ${message}`;
+
         const oauth2Client = new google.auth.OAuth2(
-          process.env.CLIENT_ID,
-          process.env.CLIENT_SECRET,
-          "https://developers.google.com/oauthplayground"
+          (process.env.CLIENT_ID || '').trim(),
+          (process.env.CLIENT_SECRET || '').trim()
         );
 
-        oauth2Client.setCredentials({ refresh_token: process.env.REFRESH_TOKEN });
+        oauth2Client.setCredentials({ 
+          refresh_token: (process.env.REFRESH_TOKEN || '').trim() 
+        });
 
         const drive = google.drive({ version: 'v3', auth: oauth2Client });
 
         const response = await drive.files.create({
           requestBody: {
             name: `Foto_${Date.now()}_${file.originalFilename || 'foto.jpg'}`,
-            parents: [process.env.FOLDER_ID],
+            parents: [(process.env.FOLDER_ID || '').trim()],
+            description: didascalia // SALVA NOME E MESSAGGIO QUI
           },
           media: {
             mimeType: file.mimetype,
