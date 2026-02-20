@@ -12,7 +12,7 @@ export default async function handler(req, res) {
         const drive = google.drive({ version: 'v3', auth: oauth2Client });
 
         const response = await drive.files.list({
-            q: `'${(process.env.FOLDER_ID || '').trim()}' in parents and mimeType contains 'image/ and trashed = false'`,
+            q: `'${(process.env.FOLDER_ID || '').trim()}' in parents and mimeType contains 'image/' and trashed = false`,
             // Abbiamo aggiunto "description" ai campi da scaricare
             fields: 'files(id, name, description, thumbnailLink, webContentLink)',
             orderBy: 'createdTime desc'
