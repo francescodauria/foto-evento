@@ -3,17 +3,18 @@ import { google } from 'googleapis';
 export default async function handler(req, res) {
     try {
         const oauth2Client = new google.auth.OAuth2(
-            process.env.CLIENT_ID,
-            process.env.CLIENT_SECRET
+            (process.env.CLIENT_ID || '').trim(),
+            (process.env.CLIENT_SECRET || '').trim()
         );
 
-        oauth2Client.setCredentials({ refresh_token: process.env.REFRESH_TOKEN });
+        oauth2Client.setCredentials({ refresh_token: (process.env.REFRESH_TOKEN || '').trim() });
 
         const drive = google.drive({ version: 'v3', auth: oauth2Client });
 
         const response = await drive.files.list({
-            q: `'${process.env.FOLDER_ID}' in parents and mimeType contains 'image/' and trashed = false`,
-            fields: 'files(id, name, thumbnailLink, webContentLink)',
+            q: `'${(process.env.FOLDER_ID || '').trim()}' in parents and mimeType contains 'image/ and trashed = false'`,
+            // Abbiamo aggiunto "description" ai campi da scaricare
+            fields: 'files(id, name, description, thumbnailLink, webContentLink)',
             orderBy: 'createdTime desc'
         });
         
