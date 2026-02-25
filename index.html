@@ -50,7 +50,7 @@
         
         #file-count { font-size: 0.95rem; color: #555; margin-bottom: 15px; display: block; font-weight: 600; }
         
-        /* BARRA (Spazio 0 quando display: none) */
+        /* BARRA DI PROGRESSO */
         #progress-container { display: none; margin-bottom: 20px; text-align: left; width: 85%; margin-left: auto; margin-right: auto; }
         #progress-text { font-size: 0.95rem; color: var(--gold-dark); font-weight: bold; margin-bottom: 8px; display: block; text-align: center; }
         .progress-bar-bg { width: 100%; background-color: #eee; border-radius: 10px; height: 14px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); }
@@ -64,7 +64,7 @@
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.92); align-items: center; justify-content: center; flex-direction: column; }
         .modal-content { max-width: 90%; max-height: 65vh; border-radius: 8px; box-shadow: 0 0 25px rgba(212, 175, 55, 0.4); border: 2px solid var(--gold); margin-bottom: 15px; }
         .modal-caption { color: var(--white); font-family: 'Playfair Display', serif; font-size: 1.2rem; max-width: 80%; text-align: center; margin-bottom: 20px; min-height: 30px; }
-        .close { position: absolute; top: 15px; right: 25px; color: var(--gold); font-size: 45px; font-weight: bold; cursor: pointer; transition: 0.3s;}
+        .close { position: absolute; top: 15px; right: 25px; color: var(--gold); font-size: 45px; font-weight: bold; cursor: pointer; transition: 0.3s; z-index: 1003; }
         .close:hover { color: var(--white); transform: scale(1.1); }
         
         /* PULSANTI SLIDESHOW PREMIUM */
@@ -89,8 +89,13 @@
         .prev { left: 15px; }
         .next { right: 15px; }
 
-        .download-btn { position: absolute; bottom: 25px; background: var(--gold); color: var(--white); text-decoration: none; padding: 12px 25px; border-radius: 30px; font-family: 'Montserrat', sans-serif; font-weight: bold; font-size: 1rem; transition: 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 8px; }
+        .download-btn { position: absolute; bottom: 25px; background: var(--gold); color: var(--white); text-decoration: none; padding: 12px 25px; border-radius: 30px; font-family: 'Montserrat', sans-serif; font-weight: bold; font-size: 1rem; transition: 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 8px; z-index: 1001; }
         .download-btn:hover { background: var(--gold-dark); transform: scale(1.05); color: var(--white); }
+
+        /* LOADER PER LO SLIDESHOW ED EFFETTO DISSOLVENZA */
+        .loader { border: 4px solid rgba(255, 255, 255, 0.2); border-top: 4px solid var(--gold); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; position: absolute; top: 50%; left: 50%; margin-top: -25px; margin-left: -25px; display: none; z-index: 1002; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #modalImg { transition: opacity 0.3s ease; }
 
         /* OTTIMIZZAZIONE PER SCHERMI PICCOLI (SMARTPHONE) */
         @media (max-width: 480px) {
@@ -104,6 +109,260 @@
     </style>
 </head>
 <body>
+
+<header>
+    <button class="fullscreen-btn" onclick="toggleFullScreen()" title="Schermo Intero">
+        <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+        </svg>
+    </button>
+    <h1>Il 30° compleanno<br>di Angela e Francesco</h1>
+    <p>Aiutateci a creare un album indimenticabile!</p>
+    
+    <div class="nav-tabs">
+        <button class="tab-btn active" onclick="switchTab('upload')">📸 Carica Foto</button>
+        <button class="tab-btn" onclick="switchTab('gallery')">🖼️ Bacheca Live</button>
+    </div>
+</header>
+
+<div id="upload-section" class="tab-content active">
+    <div class="upload-card">
+        <input type="text" id="authorInput" class="text-input" placeholder="Il tuo nome (es. Zio Marco)">
+        <textarea id="messageInput" class="text-input" placeholder="Lascia un augurio! (opzionale)" rows="2"></textarea>
+
+        <div class="input-group">
+            <label for="cameraInput" class="custom-file-upload camera-btn">📸 Scatta ora</label>
+            <input type="file" id="cameraInput" accept="image/*" capture="environment">
+
+            <label for="photoInput" class="custom-file-upload">🖼 Scegli dalla galleria</label>
+            <input type="file" id="photoInput" accept="image/*" multiple>
+        </div>
+        
+        <span id="file-count">Nessuna foto selezionata</span>
+
+        <div id="progress-container">
+            <span id="progress-text">Caricamento in corso...</span>
+            <div class="progress-bar-bg"><div id="progress-bar-fill"></div></div>
+        </div>
+
+        <button id="uploadBtn" class="btn-invia" onclick="upload()">Invia all'Album</button>
+    </div>
+</div>
+
+<div id="gallery-section" class="tab-content">
+    <h2 style="font-family: 'Playfair Display', serif; color: var(--text-dark); margin-top: 20px;">I Nostri Ricordi</h2>
+    <div id="bacheca"></div>
+</div>
+
+<div id="slideshowModal" class="modal">
+    <span class="close" onclick="closeModal()">&times;</span>
+    
+    <div id="loadingSpinner" class="loader"></div>
+
+    <button class="nav-btn prev" onclick="changeSlide(-1)" title="Foto precedente">
+        <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    
+    <img class="modal-content" id="modalImg">
+    <div id="modalCaption" class="modal-caption"></div>
+    
+    <a id="downloadBtn" class="download-btn" target="_blank" download>⬇️ Salva Foto</a>
+    
+    <button class="nav-btn next" onclick="changeSlide(1)" title="Foto successiva">
+        <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+</div>
+
+<script>
+    let photoData = []; 
+    let currentSlide = 0;
+    let selectedFiles = []; 
+    let lastFirstPhotoId = ""; 
+    let lastPhotoCount = -1;
+
+    window.onload = () => {
+        const savedName = localStorage.getItem("guestName");
+        if (savedName) document.getElementById("authorInput").value = savedName;
+        
+        loadGallery();
+        setInterval(loadGallery, 15000); 
+    };
+
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById(tabId + '-section').classList.add('active');
+        document.querySelector(`.tab-btn[onclick="switchTab('${tabId}')"]`).classList.add('active');
+        if (tabId === 'gallery') loadGallery();
+    }
+
+    document.getElementById('cameraInput').addEventListener('change', function() {
+        selectedFiles = Array.from(this.files);
+        document.getElementById('photoInput').value = ''; 
+        updateFileCount();
+    });
+
+    document.getElementById('photoInput').addEventListener('change', function() {
+        selectedFiles = Array.from(this.files);
+        document.getElementById('cameraInput').value = ''; 
+        updateFileCount();
+    });
+
+    function updateFileCount() {
+        const count = selectedFiles.length;
+        document.getElementById('file-count').innerText = count === 1 ? "1 foto pronta per l'invio" : (count > 1 ? `${count} foto pronte per l'invio` : "Nessuna foto selezionata");
+    }
+
+    function toggleFullScreen() {
+        if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+        else if (document.exitFullscreen) document.exitFullscreen();
+    }
+
+    async function loadGallery() {
+        if (document.getElementById('slideshowModal').style.display === 'flex') return; 
+
+        try {
+            const res = await fetch('/api/list');
+            const newData = await res.json();
+            
+            if (newData.length !== lastPhotoCount || (newData.length > 0 && newData[0].id !== lastFirstPhotoId)) {
+                photoData = newData;
+                lastPhotoCount = newData.length;
+                if (newData.length > 0) lastFirstPhotoId = newData[0].id;
+
+                document.getElementById('bacheca').innerHTML = photoData.map((file, index) => `
+                    <div class="photo-item" onclick="openModal(${index})">
+                        <img src="${file.thumbnailLink.replace('=s220', '=s600')}" loading="lazy" alt="Foto Evento">
+                    </div>
+                `).join('');
+            }
+        } catch (e) {
+            console.error("Errore aggiornamento bacheca", e);
+        }
+    }
+
+    function sparaCoriandoli() {
+        confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 }, colors: ['#D4AF37', '#ffffff', '#f9f1d8', '#aa8929'] });
+    }
+
+    async function upload() {
+        const btn = document.getElementById('uploadBtn');
+        const author = document.getElementById('authorInput').value;
+        const message = document.getElementById('messageInput').value;
+        const totalFiles = selectedFiles.length;
+        const progressContainer = document.getElementById('progress-container');
+
+        if (totalFiles === 0) return alert("Scegli prima le foto da caricare!");
+
+        if (author) localStorage.setItem("guestName", author);
+
+        btn.disabled = true;
+        progressContainer.style.display = "block"; 
+        
+        progressContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        for (let i = 0; i < totalFiles; i++) {
+            const file = selectedFiles[i];
+            document.getElementById('progress-text').innerText = totalFiles > 1 ? `Caricamento foto ${i + 1} di ${totalFiles}...` : `Caricamento in corso...`;
+            document.getElementById('progress-bar-fill').style.width = '0%';
+
+            await new Promise((resolve) => {
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('author', author);
+                formData.append('message', message);
+
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', '/api/upload', true);
+                xhr.upload.onprogress = e => {
+                    if (e.lengthComputable) document.getElementById('progress-bar-fill').style.width = (e.loaded / e.total * 100) + '%';
+                };
+                xhr.onload = xhr.onerror = () => resolve();
+                xhr.send(formData);
+            });
+        }
+
+        progressContainer.style.display = "none";
+        sparaCoriandoli();
+        
+        document.getElementById('messageInput').value = '';
+        selectedFiles = [];
+        updateFileCount();
+        btn.disabled = false;
+        
+        setTimeout(() => {
+            switchTab('gallery');
+        }, 1500);
+    }
+
+    function openModal(index) {
+        currentSlide = index;
+        document.getElementById('slideshowModal').style.display = 'flex';
+        updateModalImage();
+    }
+
+    function closeModal() {
+        document.getElementById('slideshowModal').style.display = 'none';
+        loadGallery(); 
+    }
+
+    function changeSlide(direction) {
+        currentSlide += direction;
+        if (currentSlide >= photoData.length) currentSlide = 0; 
+        if (currentSlide < 0) currentSlide = photoData.length - 1; 
+        updateModalImage();
+    }
+
+    // Funzione aggiornata con Spinner e Preloading
+    function updateModalImage() {
+        const photo = photoData[currentSlide];
+        const imgEl = document.getElementById('modalImg');
+        const spinner = document.getElementById('loadingSpinner');
+        const highResUrl = photo.thumbnailLink.replace('=s220', '=s1600');
+
+        // 1. Mostra la rotellina e sbiadisce morbidamente la foto vecchia
+        spinner.style.display = 'block';
+        imgEl.style.opacity = '0.3';
+
+        // 2. Quando la nuova foto è pronta, toglie la rotellina e la fa apparire
+        imgEl.onload = function() {
+            spinner.style.display = 'none';
+            imgEl.style.opacity = '1';
+        };
+
+        // 3. Assegna il link alla foto
+        imgEl.src = highResUrl;
+        document.getElementById('downloadBtn').href = photo.webContentLink;
+        
+        // 4. Gestione Didascalia
+        const captionDiv = document.getElementById('modalCaption');
+        if (photo.description) {
+            captionDiv.innerHTML = photo.description.replace(/\n/g, '<br>');
+        } else {
+            captionDiv.innerHTML = '';
+        }
+
+        // 5. IL TRUCCO DEL PRELOAD IN BACKGROUND
+        if (photoData.length > 1) {
+            let nextIndex = (currentSlide + 1) % photoData.length;
+            let prevIndex = (currentSlide - 1 + photoData.length) % photoData.length;
+
+            let preloadNext = new Image();
+            preloadNext.src = photoData[nextIndex].thumbnailLink.replace('=s220', '=s1600');
+
+            let preloadPrev = new Image();
+            preloadPrev.src = photoData[prevIndex].thumbnailLink.replace('=s220', '=s1600');
+        }
+    }
+
+    document.addEventListener('keydown', function(event) {
+        if (event.key === "Escape") closeModal();
+        if (event.key === "ArrowRight") changeSlide(1);
+        if (event.key === "ArrowLeft") changeSlide(-1);
+    });
+</script>
+</body>
+</html>
 
 <header>
     <button class="fullscreen-btn" onclick="toggleFullScreen()" title="Schermo Intero">
