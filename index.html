@@ -61,7 +61,7 @@
         .photo-item { aspect-ratio: 1 / 1; overflow: hidden; border-radius: 10px; background: #eee; box-shadow: 0 4px 8px rgba(0,0,0,0.08); cursor: pointer; border: 2px solid transparent; transition: 0.3s; position: relative; }
         .photo-item:hover { border-color: var(--gold); transform: scale(1.03); }
         .photo-item img { width: 100%; height: 100%; object-fit: cover; }
-        .insta-caption { display: none; } /* Nascosta in modalità griglia */
+        .insta-caption { display: none; } 
 
         /* ========================================= */
         /* MODALITA' INSTAGRAM (/new o ?new o #new)  */
@@ -72,12 +72,21 @@
         body.insta-mode .fullscreen-btn { display: none; }
         body.insta-mode .nav-tabs { display: none; }
         body.insta-mode h2 { display: none; }
-        body.insta-mode .tab-content { padding-bottom: 80px; } /* Spazio per la barra in basso */
+        body.insta-mode .tab-content { padding-bottom: 80px; } 
         
-        body.insta-mode #bacheca { display: flex; flex-direction: column; gap: 30px; padding: 20px 0; max-width: 500px; margin: 0 auto; background: var(--white); }
-        body.insta-mode .photo-item { aspect-ratio: auto; border-radius: 0; box-shadow: none; border: none; border-bottom: 1px solid #eee; padding-bottom: 15px; margin: 0; cursor: default; }
-        body.insta-mode .photo-item:hover { transform: none; border-color: #eee; }
-        body.insta-mode .photo-item img { border-radius: 0; width: 100%; height: auto; max-height: 75vh; object-fit: cover; }
+        body.insta-mode #bacheca { display: flex; flex-direction: column; gap: 20px; padding: 0 0 20px 0; max-width: 500px; margin: 0 auto; background: var(--white); }
+        body.insta-mode .photo-item { border-radius: 0; box-shadow: none; border: none; border-bottom: 1px solid #eee; padding-bottom: 15px; margin: 0; cursor: default; }
+        body.insta-mode .photo-item:hover { transform: none; border-color: transparent; }
+        
+        /* MAGIA PER LE FOTO VERTICALI IN INSTA-MODE */
+        body.insta-mode .photo-item img { 
+            border-radius: 0; 
+            width: 100%; 
+            max-height: 60vh; /* Blocca l'altezza in modo che entri tutto nello schermo */
+            object-fit: contain; /* Mostra tutta la foto senza tagliarla */
+            background: #f4f4f4; /* Sfondo elegante per foto non perfettamente proporzionate */
+        }
+        
         body.insta-mode .insta-caption { display: block; text-align: left; padding: 12px 20px 0; font-family: 'Montserrat', sans-serif; font-size: 0.95rem; color: var(--text-dark); line-height: 1.4; }
         
         /* BARRA FISSA IN BASSO (Solo in Insta-mode) */
@@ -93,6 +102,7 @@
         .insta-upload-btn svg { width: 28px; height: 28px; stroke: currentColor; stroke-width: 2.5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
         /* ========================================= */
 
+        /* MODAL SLIDESHOW */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.92); align-items: center; justify-content: center; flex-direction: column; overflow: hidden; }
         .modal-content { max-width: 90%; max-height: 65vh; border-radius: 8px; box-shadow: 0 0 25px rgba(212, 175, 55, 0.4); border: 2px solid var(--gold); margin-bottom: 15px; z-index: 1002; position: relative; }
         .modal-caption { color: var(--white); font-family: 'Playfair Display', serif; font-size: 1.2rem; max-width: 80%; text-align: center; margin-bottom: 20px; min-height: 30px; z-index: 1002;}
@@ -199,7 +209,6 @@
         const savedName = localStorage.getItem("guestName");
         if (savedName) document.getElementById("authorInput").value = savedName;
         
-        // Se è modalità instagram, attiva le classi CSS e forza la scheda galleria
         if (isNewView) {
             document.body.classList.add('insta-mode');
             switchTab('gallery');
@@ -214,11 +223,9 @@
         document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
         document.getElementById(tabId + '-section').classList.add('active');
         
-        // Tasti Tab normali
         const tabBtn = document.querySelector(`.tab-btn[onclick="switchTab('${tabId}')"]`);
         if (tabBtn) tabBtn.classList.add('active');
 
-        // Tasti Barra Instagram
         document.querySelectorAll('.insta-nav-btn').forEach(el => el.classList.remove('active'));
         if (tabId === 'gallery') {
             document.getElementById('instaHomeBtn').classList.add('active');
@@ -323,7 +330,6 @@
         
         setTimeout(() => {
             switchTab('gallery');
-            // Scorri automaticamente in cima per vedere la nuova foto
             window.scrollTo({top: 0, behavior: 'smooth'}); 
         }, 1500);
     }
@@ -342,7 +348,6 @@
                 lastPhotoCount = newData.length;
                 if (newData.length > 0) lastFirstPhotoId = newData[0].id;
                 
-                // Disegna le foto in modo dinamico aggiungendo la Didascalia sotto (visibile solo in Insta-mode)
                 document.getElementById('bacheca').innerHTML = photoData.map((file, index) => {
                     let captionHtml = "";
                     if (file.description) {
@@ -351,7 +356,7 @@
                     
                     return `
                     <div class="photo-item" onclick="if(!document.body.classList.contains('insta-mode')) openModal(${index})">
-                        <img src="${file.thumbnailLink.replace('=s220', '=s800')}" loading="lazy">
+                        <img src="${file.thumbnailLink ? file.thumbnailLink.replace('=s220', '=s800') : ''}" loading="lazy">
                         ${captionHtml}
                     </div>
                 `;}).join('');
@@ -377,13 +382,14 @@
     function updateModalImage() {
         const photo = photoData[currentSlide];
         const modalImg = document.getElementById('modalImg');
+        const spinner = document.getElementById('loadingSpinner');
 
         modalImg.style.opacity = '0.3';
-        document.getElementById('loadingSpinner').style.display = 'block';
+        spinner.style.display = 'block';
 
         modalImg.onload = () => {
             modalImg.style.opacity = '1';
-            document.getElementById('loadingSpinner').style.display = 'none';
+            spinner.style.display = 'none';
         };
         
         modalImg.src = photo.thumbnailLink.replace('=s220', '=s1600');
