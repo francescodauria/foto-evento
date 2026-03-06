@@ -96,8 +96,8 @@
         body.insta-mode .insta-caption { display: block; text-align: left; padding: 10px 15px; font-size: 0.9rem; line-height: 1.4; color: var(--text-dark); }
         body.insta-mode .caption-author { font-weight: 700; margin-right: 5px; }
         
-        /* Pulsante Download come vero button (Insta-mode) */
-        body.insta-mode .dl-link { display: inline-block; margin-top: 5px; color: var(--gold-dark); text-decoration: none; font-weight: bold; font-size: 0.85rem; background: transparent; border: none; padding: 0; cursor: pointer; font-family: inherit; }
+        /* Pulsante Download come LINK vero (Ora usa il nostro server API) */
+        body.insta-mode .dl-link { display: inline-block; margin-top: 5px; color: var(--gold-dark); text-decoration: none; font-weight: bold; font-size: 0.85rem; }
 
         /* BARRA FISSA IN BASSO (Solo in Insta-mode) */
         .insta-bottom-bar { display: none; position: fixed; bottom: 0; left: 0; width: 100%; height: 65px; background: var(--white); box-shadow: 0 -4px 15px rgba(0,0,0,0.05); z-index: 999; justify-content: space-around; align-items: center; border-top: 1px solid var(--border-grey); }
@@ -122,8 +122,8 @@
         .prev { left: 15px; }
         .next { right: 15px; }
         
-        /* Pulsante Download come vero button (Modal) */
-        .download-btn { position: absolute; bottom: 25px; background: var(--gold); color: var(--white); text-decoration: none; padding: 12px 25px; border-radius: 30px; font-family: 'Montserrat', sans-serif; font-weight: bold; font-size: 1rem; transition: 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 8px; z-index: 1004; border: none; cursor: pointer; }
+        /* Pulsante Download nel modal ri-trasformato in link */
+        .download-btn { position: absolute; bottom: 25px; background: var(--gold); color: var(--white); text-decoration: none; padding: 12px 25px; border-radius: 30px; font-family: 'Montserrat', sans-serif; font-weight: bold; font-size: 1rem; transition: 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 8px; z-index: 1004; cursor: pointer; }
         .download-btn:hover { background: var(--gold-dark); transform: scale(1.05); color: var(--white); }
         .loader { border: 4px solid rgba(255, 255, 255, 0.2); border-top: 4px solid var(--gold); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; position: absolute; top: 50%; left: 50%; margin-top: -25px; margin-left: -25px; display: none; z-index: 1001; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -204,7 +204,7 @@
     <img class="modal-content" id="modalImg" alt="Foto ingrandita">
     
     <div id="modalCaption" class="modal-caption"></div>
-    <button id="downloadBtn" class="download-btn">⬇️ Salva Foto</button>
+    <a id="downloadBtn" class="download-btn">⬇️ Salva Foto</a>
     <button class="nav-btn next" onclick="changeSlide(1)"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></button>
 </div>
 
@@ -258,31 +258,6 @@
     function updateFileCount() {
         const count = selectedFiles.length;
         document.getElementById('file-count').innerText = count === 1 ? "1 foto pronta" : (count > 1 ? `${count} foto pronte` : "Nessuna foto selezionata");
-    }
-
-    // --- FUNZIONE FORZA DOWNLOAD (Aggira il blocco del browser/Google Drive) ---
-    async function forceDownload(url, filename) {
-        try {
-            // Scarica i dati dell'immagine "dietro le quinte"
-            const response = await fetch(url);
-            const blob = await response.blob();
-            
-            // Crea un link temporaneo interno al dispositivo e lo clicca per forzare il download
-            const blobUrl = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.style.display = 'none';
-            a.href = blobUrl;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            
-            // Pulisce la memoria
-            window.URL.revokeObjectURL(blobUrl);
-            document.body.removeChild(a);
-        } catch (error) {
-            console.error('Errore nel download diretto, apro la foto in una nuova scheda.', error);
-            window.open(url, '_blank'); // Se fallisce (es. connessione lenta) apre l'immagine normalmente
-        }
     }
 
     async function compressImage(file, maxWidth = 1920, quality = 0.85) {
@@ -406,10 +381,10 @@
                     
                     const iniziale = autoreStr.charAt(0).toUpperCase();
                     
-                    const downloadBypassLink = file.thumbnailLink ? file.thumbnailLink.replace('=s220', '=s0') : '#';
-                    const filename = `Foto_Compleanno_${index}.jpg`;
+                    // Il link punta alla nostra nuova API segreta su Vercel per forzare il download!
+                    const forceDownloadUrl = `/api/download?url=${encodeURIComponent(file.thumbnailLink ? file.thumbnailLink.replace('=s220', '=s0') : '')}`;
 
-                    // HTML per Modalità Instagram (Pulsante javascript forza download)
+                    // HTML per Modalità Instagram
                     let instaHtml = `
                         <div class="post-header">
                             <div class="profile-pic">${iniziale}</div>
@@ -419,7 +394,7 @@
                         <div class="insta-caption">
                             <span class="caption-author">${autoreStr}</span>
                             <span class="caption-text">${msgStr}</span>
-                            <br><button onclick="forceDownload('${downloadBypassLink}', '${filename}')" class="dl-link">⬇️ Salva Foto</button>
+                            <br><a href="${forceDownloadUrl}" class="dl-link" download>⬇️ Salva Foto</a>
                         </div>
                     `;
 
@@ -467,11 +442,9 @@
         
         modalImg.src = photo.thumbnailLink.replace('=s220', '=s1600');
         
-        // TRUCCO JAVASCRIPT PER IL MODAL
-        const directLink = photo.thumbnailLink.replace('=s220', '=s0');
-        document.getElementById('downloadBtn').onclick = function() {
-            forceDownload(directLink, 'Foto_Compleanno.jpg');
-        };
+        // Assegno il link API al pulsante di Download nel Modal
+        const forceDownloadUrl = `/api/download?url=${encodeURIComponent(photo.thumbnailLink.replace('=s220', '=s0'))}`;
+        document.getElementById('downloadBtn').href = forceDownloadUrl;
         
         document.getElementById('modalCaption').innerHTML = photo.description ? photo.description.replace(/\n/g, '<br>') : '';
     }
