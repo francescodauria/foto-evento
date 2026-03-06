@@ -1,21 +1,23 @@
 // File: api/download.js
 export default async function handler(req, res) {
-    const { url } = req.query;
+    // Ora leggiamo anche il parametro "filename" dall'URL
+    const { url, filename } = req.query;
     if (!url) return res.status(400).send('URL mancante');
 
+    // Se non c'è un nome, usiamo un fallback basato sul timestamp per renderlo sempre unico
+    const safeFilename = filename || `Foto_Compleanno_${Date.now()}.jpg`;
+
     try {
-        // Il server di Vercel scarica la foto da Google (qui i blocchi di sicurezza non ci sono)
         const imageRes = await fetch(url);
         if (!imageRes.ok) throw new Error('Impossibile recuperare la foto');
 
         const arrayBuffer = await imageRes.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
 
-        // Questa è la vera magia: forziamo il download sul telefono!
-        res.setHeader('Content-Disposition', 'attachment; filename="Ricordo_Compleanno.jpg"');
+        // Inseriamo il nome dinamico nell'etichetta del download
+        res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}"`);
         res.setHeader('Content-Type', 'image/jpeg');
         
-        // Inviamo il file all'utente
         res.status(200).send(buffer);
     } catch (error) {
         console.error("Errore download:", error);
