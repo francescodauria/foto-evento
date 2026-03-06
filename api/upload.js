@@ -7,20 +7,19 @@ export const config = { api: { bodyParser: false } };
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Metodo non permesso' });
 
-  const form = formidable({});
+  // Aumentiamo il limite interno di Formidable a 20MB (per sicurezza)
+  const form = formidable({ maxFileSize: 20 * 1024 * 1024 });
   
   return new Promise((resolve, reject) => {
     form.parse(req, async (err, fields, files) => {
-      if (err) return res.status(500).json({ error: "Errore parsing file" });
+      if (err) return res.status(500).json({ error: "Errore parsing file: " + err.message });
 
       try {
         const file = files.file[0] || files.file;
         
-        // Estraiamo nome e messaggio (formidable a volte li mette in array)
         const author = fields.author ? (Array.isArray(fields.author) ? fields.author[0] : fields.author) : '';
         const message = fields.message ? (Array.isArray(fields.message) ? fields.message[0] : fields.message) : '';
 
-        // Creiamo la didascalia da salvare su Drive
         let didascalia = "";
         if (author) didascalia += `📸 Scattata da: ${author}\n`;
         if (message) didascalia += `💬 ${message}`;
@@ -40,12 +39,14 @@ export default async function handler(req, res) {
           requestBody: {
             name: `Foto_${Date.now()}_${file.originalFilename || 'foto.jpg'}`,
             parents: [(process.env.FOLDER_ID || '').trim()],
-            description: didascalia // SALVA NOME E MESSAGGIO QUI
+            description: didascalia
           },
           media: {
             mimeType: file.mimetype,
             body: fs.createReadStream(file.filepath),
           },
+          // FONDAMENTALE PER FILE GRANDI: impedisce il blocco delle API di Google
+          resumable: true, 
           fields: 'id',
         });
 
