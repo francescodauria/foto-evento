@@ -275,7 +275,14 @@
             switchTab('gallery');
         }, 1500);
     }
-
+function sparaCoriandoli() {
+    confetti({ 
+        particleCount: 150, // Il numero di coriandoli da sparare
+        spread: 80,         // L'ampiezza dell'esplosione (angolo in gradi)
+        origin: { y: 0.6 }, // Da dove parte l'esplosione (leggermente più in basso del centro)
+        colors: ['#D4AF37', '#ffffff', '#f9f1d8', '#aa8929'] // I colori: Oro, Bianco, Panna e Oro scuro!
+    });
+}
     async function loadGallery() {
         if (document.getElementById('slideshowModal').style.display === 'flex') return; 
         try {
