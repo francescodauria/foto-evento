@@ -26,6 +26,7 @@
         h1 { font-family: 'Playfair Display', serif; color: var(--gold-dark); font-size: 2.2rem; margin: 0 0 10px 0; transition: 0.3s; }
         p { color: #666; font-size: 1rem; margin: 0; }
 
+        /* MENU A SCHEDE */
         .nav-tabs { display: flex; justify-content: center; gap: 10px; margin-top: 15px; border-bottom: 2px solid var(--gold-light); padding-bottom: 15px; }
         .tab-btn { background: transparent; border: 2px solid var(--gold); color: var(--gold-dark); padding: 10px 20px; border-radius: 30px; font-weight: bold; cursor: pointer; transition: 0.3s; font-family: 'Montserrat', sans-serif; font-size: 0.95rem; }
         .tab-btn:hover { background: var(--gold-light); }
@@ -35,6 +36,7 @@
         .tab-content.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
+        /* FORM DI UPLOAD */
         .upload-card { background: var(--white); max-width: 450px; margin: 30px auto; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(212, 175, 55, 0.15); border: 1px solid var(--gold-light); box-sizing: border-box; }
         .text-input { width: 85%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; font-family: 'Montserrat', sans-serif; font-size: 1rem; box-sizing: border-box; transition: 0.3s; }
         .text-input:focus { border-color: var(--gold); outline: none; box-shadow: 0 0 8px rgba(212, 175, 55, 0.3); }
@@ -327,10 +329,8 @@
         confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 }, colors: ['#D4AF37', '#ffffff', '#f9f1d8', '#aa8929'] });
     }
 
-    // FUNZIONE PER PULIRE IL NOME DEL FILE
     function getSafeFilename(filename, fallbackIndex) {
         if (!filename) return `Foto_Compleanno_${fallbackIndex}.jpg`;
-        // Rimuove caratteri strani, tiene solo lettere, numeri, punti, trattini e underscore
         let safeName = filename.replace(/[^a-zA-Z0-9.\-_]/g, '_');
         if (!safeName.toLowerCase().endsWith('.jpg') && !safeName.toLowerCase().endsWith('.jpeg')) {
             safeName += '.jpg';
@@ -356,21 +356,27 @@
                     if (file.description) {
                         const righe = file.description.split('\n');
                         righe.forEach(riga => {
-                            if (riga.startsWith('📸 Scattata da: ')) {
-                                autoreStr = riga.replace('📸 Scattata da: ', '').trim();
-                            } else if (riga.startsWith('💬 ')) {
-                                msgStr += riga.replace('💬 ', '') + '<br>';
-                            } else {
-                                msgStr += riga + '<br>';
+                            let rigaClean = riga.trim();
+                            if (rigaClean.startsWith('📸 Scattata da:')) {
+                                autoreStr = rigaClean.replace('📸 Scattata da:', '').trim();
+                            } else if (rigaClean.startsWith('💬')) {
+                                let m = rigaClean.replace('💬', '').trim();
+                                if(m) msgStr += m + '<br>';
+                            } else if (rigaClean !== '') {
+                                msgStr += rigaClean + '<br>';
                             }
                         });
                     }
                     
                     const iniziale = autoreStr.charAt(0).toUpperCase();
-                    
-                    // PASSAGGIO DEL NOME FILE ALL'API
                     const safeName = getSafeFilename(file.name, index);
                     const forceDownloadUrl = `/api/download?url=${encodeURIComponent(file.thumbnailLink ? file.thumbnailLink.replace('=s220', '=s0') : '')}&filename=${encodeURIComponent(safeName)}`;
+
+                    // LOGICA CONDIZIONALE: Mostra nome e testo in basso SOLO se la descrizione non è vuota
+                    let captionHtml = "";
+                    if (msgStr.trim() !== "") {
+                        captionHtml = `<span class="caption-author">${autoreStr}</span> <span class="caption-text">${msgStr}</span><br>`;
+                    }
 
                     let instaHtml = `
                         <div class="post-header">
@@ -379,9 +385,8 @@
                         </div>
                         <img src="${file.thumbnailLink ? file.thumbnailLink.replace('=s220', '=s800') : ''}" loading="lazy">
                         <div class="insta-caption">
-                            <span class="caption-author">${autoreStr}</span>
-                            <span class="caption-text">${msgStr}</span>
-                            <br><a href="${forceDownloadUrl}" class="dl-link" download>⬇️ Salva Foto</a>
+                            ${captionHtml}
+                            <a href="${forceDownloadUrl}" class="dl-link" download>⬇️ Salva Foto</a>
                         </div>
                     `;
 
@@ -428,7 +433,6 @@
         
         modalImg.src = photo.thumbnailLink.replace('=s220', '=s1600');
         
-        // PASSAGGIO DEL NOME FILE ALL'API (MODAL)
         const safeName = getSafeFilename(photo.name, currentSlide);
         const forceDownloadUrl = `/api/download?url=${encodeURIComponent(photo.thumbnailLink.replace('=s220', '=s0'))}&filename=${encodeURIComponent(safeName)}`;
         document.getElementById('downloadBtn').href = forceDownloadUrl;
